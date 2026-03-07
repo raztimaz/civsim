@@ -1,6 +1,7 @@
 import random
 import hashlib
 from settings import *
+from units import UnitGroup,Unit
 
 class Tile:
     __slots__ = ('type', 'overlay')
@@ -19,6 +20,8 @@ class World:
         self.h = h
         self.seed = seed if seed is not None else random.randint(0, 10**10)
         self.tiles = [[Tile() for _ in range(h)] for _ in range(w)]
+        self.unit_groups = [[None for _ in range(h)] for _ in range(w)]
+        self.unit_groups[25][25]=UnitGroup([Unit(0,self,25,25)],25,25,self)
         self.generate()
 
     def get_tile(self, x, y):
@@ -77,3 +80,10 @@ class World:
         self.fix_clusters(TILE_FOREST)
         self.fix_clusters(TILE_MOUNTAIN)
         self.place_iron()
+
+    def update(self):
+        for x in range(self.h):
+            for y in range(self.w):
+                group=self.unit_groups[x][y]
+                if group is not None:
+                    group.update(self)

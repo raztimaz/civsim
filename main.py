@@ -63,6 +63,7 @@ class WorldRenderer:
                          load_texture("tiles/mountain")]
         self.overlays = [pg.Surface((0, 0), pg.SRCALPHA), 
                          load_texture("overlays/iron")]
+        self.unit_textures=[load_texture("textures/units/test")]
         self.render_all()
 
     def render_all(self):
@@ -78,17 +79,24 @@ class WorldRenderer:
                 int(self.world.h * CELL_SIZE * zoom))
         return pg.transform.smoothscale(self.full_surf, size)
 
+    def draw_units(self,screen):
+        for y in range(self.world.h):
+            for x in range(self.world.w):
+                group=self.world.unit_groups[x][y]
+                if group is None:
+                    continue
+                screen.blit(self.unit_textures[group.main_unit.type],(x*CELL_SIZE,
+                                                                      y*CELL_SIZE))
+    
     def draw_ui(self, screen, camera, world):
         tx, ty = camera.screen_to_world(pg.mouse.get_pos())
         tile = world.get_tile(tx, ty)
         if tile:
-            # Отрисовка рамки
             rect = (tx * CELL_SIZE * camera.zoom + camera.x, 
                     ty * CELL_SIZE * camera.zoom + camera.y, 
                     CELL_SIZE * camera.zoom, CELL_SIZE * camera.zoom)
             pg.draw.rect(screen, SELECT_COLOR, rect, 2)
-            
-            # Инфо-текст (простейший консольный вывод для начала)
+
             f, p, g = tile.get_resources()
             pg.display.set_caption(f"Coord: {tx},{ty} | {TILE_NAMES[tile.type]} {OVERLAY_NAMES[tile.overlay]} | F:{f} P:{p} G:{g}")
 
@@ -119,13 +127,19 @@ def main():
                 camera.handle_move(event.rel)
         
         camera.apply_limits(view_surf)
+        
         screen.fill((30, 30, 30))
+
+        renderer.draw_units(view_surf)
         screen.blit(view_surf, (camera.x, camera.y))
         
         renderer.draw_ui(screen, camera, world)
         
+        
         pg.display.flip()
         clock.tick(FPS)
+
+        world.update()
 
 if __name__ == "__main__":
     main()
